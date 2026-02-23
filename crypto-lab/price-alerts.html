@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crypto Price Alerts</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: linear-gradient(135deg, #1a1a2e 0%, #0f0f23 100%); min-height: 100vh; padding: 20px; color: #fff; }
+        .container { max-width: 900px; margin: 0 auto; }
+        
+        h1 { text-align: center; margin-bottom: 30px; background: linear-gradient(90deg, #ff8800, #ff4444); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        
+        .card { background: rgba(255,255,255,0.05); border-radius: 16px; padding: 24px; margin-bottom: 20px; border: 1px solid rgba(255,255,255,0.1); }
+        
+        .price-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 15px; margin-bottom: 20px; }
+        .price-card { background: rgba(255,255,255,0.05); border-radius: 12px; padding: 15px; text-align: center; }
+        .price-symbol { font-size: 1.5rem; }
+        .price-value { font-size: 1.8rem; font-weight: 700; margin: 10px 0; }
+        .price-change { font-size: 14px; }
+        .positive { color: #00ff88; }
+        .negative { color: #ff4444; }
+        
+        .alert-row { display: flex; align-items: center; gap: 15px; padding: 15px; background: rgba(255,255,255,0.03); border-radius: 12px; margin-bottom: 10px; }
+        .alert-coin { font-size: 1.5rem; }
+        .alert-info { flex: 1; }
+        .alert-condition { font-weight: 600; }
+        .alert-target { color: #a0a0b0; }
+        .alert-status { padding: 6px 12px; border-radius: 20px; font-size: 12px; }
+        .alert-status.active { background: rgba(0,255,136,0.2); color: #00ff88; }
+        .alert-status.triggered { background: rgba(255,136,0,0.2); color: #ff8800; }
+        
+        .btn { padding: 12px 20px; background: linear-gradient(90deg, #00d4ff, #7c3aed); border: none; border-radius: 8px; color: #fff; font-weight: 600; cursor: pointer; }
+        .btn-danger { background: linear-gradient(90deg, #ff4444, #cc0000); }
+        
+        input, select { padding: 12px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 8px; color: #fff; width: 100%; margin-bottom: 12px; }
+        
+        .tab-buttons { display: flex; gap: 10px; margin-bottom: 20px; }
+        .tab-btn { padding: 10px 20px; background: rgba(255,255,255,0.1); border: none; border-radius: 8px; color: #fff; cursor: pointer; }
+        .tab-btn.active { background: #00d4ff; }
+        
+        .hidden { display: none; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔔 Crypto Price Alerts</h1>
+        
+        <div class="card">
+            <h3 style="margin-bottom: 15px;">Live Prices</h3>
+            <div class="price-grid" id="prices"></div>
+        </div>
+        
+        <div class="tab-buttons">
+            <button class="tab-btn active" onclick="showTab('alerts')">My Alerts</button>
+            <button class="tab-btn" onclick="showTab('add')">Add Alert</button>
+        </div>
+        
+        <div id="alerts">
+            <div id="alertsList"></div>
+        </div>
+        
+        <div id="add" class="hidden">
+            <div class="card">
+                <h3 style="margin-bottom: 20px;">Create Alert</h3>
+                
+                <label>Coin</label>
+                <select id="alertCoin">
+                    <option value="BTC">Bitcoin (BTC)</option>
+                    <option value="ETH">Ethereum (ETH)</option>
+                    <option value="SOL">Solana (SOL)</option>
+                    <option value="BNB">BNB</option>
+                    <option value="XRP">XRP</option>
+                    <option value="ADA">Cardano (ADA)</option>
+                    <option value="DOGE">Dogecoin (DOGE)</option>
+                    <option value="AVAX">Avalanche (AVAX)</option>
+                    <option value="DOT">Polkadot (DOT)</option>
+                    <option value="MATIC">Polygon (MATIC)</option>
+                </select>
+                
+                <label>Condition</label>
+                <select id="alertCondition">
+                    <option value="above">Price goes above</option>
+                    <option value="below">Price goes below</option>
+                    <option value="percent_up">Rises by %</option>
+                    <option value="percent_down">Falls by %</option>
+                </select>
+                
+                <label>Target Price / Percentage</label>
+                <input type="number" id="alertTarget" placeholder="e.g., 70000 or 5">
+                
+                <button class="btn" onclick="createAlert()">Create Alert</button>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Mock prices - in production, use CoinGecko API
+        const prices = {
+            BTC: { price: 67500, change: 2.3, symbol: '₿' },
+            ETH: { price: 3450, change: 1.8, symbol: 'Ξ' },
+            SOL: { price: 145, change: -0.5, symbol: '◎' },
+            BNB: { price: 580, change: 0.9, symbol: 'B' },
+            XRP: { price: 0.52, change: 3.2, symbol: 'X' },
+            ADA: { price: 0.45, change: -1.2, symbol: 'A' },
+            DOGE: { price: 0.085, change: 5.1, symbol: 'D' },
+            AVAX: { price: 38, change: 2.1, symbol: '▲' },
+            DOT: { price: 7.2, change: -0.8, symbol: '●' },
+            MATIC: { price: 0.58, change: 1.1, symbol: 'M' }
+        };
+        
+        let alerts = JSON.parse(localStorage.getItem('priceAlerts')) || [
+            { id: 1, coin: 'BTC', condition: 'above', target: 70000, status: 'active' },
+            { id: 2, coin: 'ETH', condition: 'below', target: 3000, status: 'active' },
+            { id: 3, coin: 'SOL', condition: 'above', target: 150, status: 'triggered' }
+        ];
+        
+        function showTab(tab) {
+            document.getElementById('alerts').classList.add('hidden');
+            document.getElementById('add').classList.add('hidden');
+            document.getElementById(tab).classList.remove('hidden');
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+        }
+        
+        function renderPrices() {
+            const grid = document.getElementById('prices');
+            grid.innerHTML = '';
+            
+            Object.entries(prices).forEach(([coin, data]) => {
+                grid.innerHTML += `
+                    <div class="price-card">
+                        <div class="price-symbol">${data.symbol}</div>
+                        <div class="price-value">$${data.price.toLocaleString()}</div>
+                        <div class="price-change ${data.change >= 0 ? 'positive' : 'negative'}">
+                            ${data.change >= 0 ? '↑' : '↓'} ${Math.abs(data.change)}%
+                        </div>
+                    </div>
+                `;
+            });
+        }
+        
+        function renderAlerts() {
+            const list = document.getElementById('alertsList');
+            
+            if (alerts.length === 0) {
+                list.innerHTML = '<div class="card"><p style="color: #606070;">No alerts set. Create one!</p></div>';
+                return;
+            }
+            
+            list.innerHTML = alerts.map(alert => {
+                const coinData = prices[alert.coin] || { price: 0 };
+                const current = coinData.price;
+                let triggered = false;
+                
+                if (alert.condition === 'above' && current > alert.target) triggered = true;
+                if (alert.condition === 'below' && current < alert.target) triggered = true;
+                
+                if (triggered && alert.status === 'active') {
+                    alert.status = 'triggered';
+                    // In production, send notification here
+                    if (Notification.permission === 'granted') {
+                        new Notification(`${alert.coin} Alert!`, {
+                            body: `${alert.coin} is now $${current} (${alert.condition} $${alert.target})`
+                        });
+                    }
+                }
+                
+                const conditionText = {
+                    'above': `Above $${alert.target}`,
+                    'below': `Below $${alert.target}`,
+                    'percent_up': `Up ${alert.target}%`,
+                    'percent_down': `Down ${alert.target}%`
+                };
+                
+                return `
+                    <div class="alert-row">
+                        <div class="alert-coin">${prices[alert.coin]?.symbol || '?'}</div>
+                        <div class="alert-info">
+                            <div class="alert-condition">${alert.coin}</div>
+                            <div class="alert-target">${conditionText[alert.condition]}</div>
+                        </div>
+                        <div class="alert-status ${alert.status}">${alert.status}</div>
+                        <button class="btn btn-danger btn-small" onclick="deleteAlert(${alert.id})">×</button>
+                    </div>
+                `;
+            }).join('');
+            
+            localStorage.setItem('priceAlerts', JSON.stringify(alerts));
+        }
+        
+        function createAlert() {
+            const coin = document.getElementById('alertCoin').value;
+            const condition = document.getElementById('alertCondition').value;
+            const target = parseFloat(document.getElementById('alertTarget').value);
+            
+            if (!target) return alert('Please enter target');
+            
+            alerts.push({
+                id: Date.now(),
+                coin,
+                condition,
+                target,
+                status: 'active',
+                created: new Date().toISOString()
+            });
+            
+            localStorage.setItem('priceAlerts', JSON.stringify(alerts));
+            renderAlerts();
+            showTab('alerts');
+            alert('Alert created!');
+        }
+        
+        function deleteAlert(id) {
+            alerts = alerts.filter(a => a.id !== id);
+            localStorage.setItem('priceAlerts', JSON.stringify(alerts));
+            renderAlerts();
+        }
+        
+        // Request notification permission
+        if (Notification && Notification.permission === 'default') {
+            Notification.requestPermission();
+        }
+        
+        // Update prices and check alerts every 30 seconds
+        renderPrices();
+        renderAlerts();
+        
+        setInterval(() => {
+            // In production, fetch new prices here
+            renderPrices();
+            renderAlerts();
+        }, 30000);
+    </script>
+</body>
+</html>

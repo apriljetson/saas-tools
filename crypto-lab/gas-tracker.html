@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gas Tracker - Optimal Transaction Times</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: linear-gradient(135deg, #1a1a2e 0%, #0f0f23 100%); min-height: 100vh; padding: 20px; color: #fff; }
+        .container { max-width: 900px; margin: 0 auto; }
+        
+        h1 { text-align: center; margin-bottom: 30px; background: linear-gradient(90deg, #00ff88, #00d4ff); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        
+        .card { background: rgba(255,255,255,0.05); border-radius: 16px; padding: 24px; margin-bottom: 20px; border: 1px solid rgba(255,255,255,0.1); }
+        
+        .chain-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px; }
+        .chain-card { background: rgba(255,255,255,0.03); border-radius: 12px; padding: 20px; border: 1px solid rgba(255,255,255,0.1); }
+        .chain-header { display: flex; align-items: center; gap: 12px; margin-bottom: 15px; }
+        .chain-icon { font-size: 2rem; }
+        .chain-name { font-weight: 600; font-size: 1.1rem; }
+        .chain-status { font-size: 12px; padding: 4px 10px; border-radius: 12px; }
+        .chain-status.low { background: rgba(0,255,136,0.2); color: #00ff88; }
+        .chain-status.medium { background: rgba(255,136,0,0.2); color: #ff8800; }
+        .chain-status.high { background: rgba(255,68,68,0.2); color: #ff4444; }
+        
+        .gas-row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.1); }
+        .gas-row:last-child { border-bottom: none; }
+        .gas-type { color: #a0a0b0; }
+        .gas-price { font-weight: 600; }
+        
+        .recommendation { background: rgba(0,255,136,0.1); border: 1px solid rgba(0,255,136,0.3); border-radius: 12px; padding: 16px; margin-top: 15px; }
+        .rec-title { font-weight: 600; color: #00ff88; margin-bottom: 8px; }
+        .rec-text { font-size: 14px; color: #ccc; }
+        
+        .history-chart { height: 100px; display: flex; align-items: flex-end; gap: 4px; padding: 10px 0; }
+        .chart-bar { flex: 1; background: linear-gradient(to top, #00d4ff, #7c3aed); border-radius: 2px 2px 0 0; }
+        
+        .update-time { text-align: center; color: #606070; font-size: 12px; margin-top: 15px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>⛽ Gas Tracker</h1>
+        
+        <div class="card">
+            <h3 style="margin-bottom: 20px;">Current Gas Prices</h3>
+            <div class="chain-grid" id="gasGrid"></div>
+        </div>
+        
+        <div class="card">
+            <h3 style="margin-bottom: 15px;">24h Gas History (Gwei)</h3>
+            <div class="history-chart" id="historyChart"></div>
+            <div class="update-time">Last updated: <span id="lastUpdate">Just now</span></div>
+        </div>
+        
+        <div class="card">
+            <h3 style="margin-bottom: 15px;">💡 Recommendations</h3>
+            <div id="recommendations"></div>
+        </div>
+    </div>
+    
+    <script>
+        // Mock gas data - in production, use RPC/gas APIs
+        const gasData = {
+            ethereum: {
+                name: 'Ethereum',
+                icon: 'Ξ',
+                status: 'medium',
+                gas: {
+                    slow: { gwei: 15, time: '5-10 min', usd: '$2.50' },
+                    standard: { gwei: 25, time: '1-3 min', usd: '$4.20' },
+                    fast: { gwei: 40, time: '< 30 sec', usd: '$6.70' }
+                }
+            },
+            base: {
+                name: 'Base',
+                icon: '🔵',
+                status: 'low',
+                gas: {
+                    slow: { gwei: 0.001, time: '5-10 min', usd: '$0.05' },
+                    standard: { gwei: 0.005, time: '1-3 min', usd: '$0.25' },
+                    fast: { gwei: 0.01, time: '< 30 sec', usd: '$0.50' }
+                }
+            },
+            arbitrum: {
+                name: 'Arbitrum',
+                icon: '🔴',
+                status: 'low',
+                gas: {
+                    slow: { gwei: 0.01, time: '5-10 min', usd: '$0.10' },
+                    standard: { gwei: 0.05, time: '1-3 min', usd: '$0.50' },
+                    fast: { gwei: 0.1, time: '< 30 sec', usd: '$1.00' }
+                }
+            },
+            optimism: {
+                name: 'Optimism',
+                icon: '🔶',
+                status: 'low',
+                gas: {
+                    slow: { gwei: 0.001, time: '5-10 min', usd: '$0.03' },
+                    standard: { gwei: 0.005, time: '1-3 min', usd: '$0.15' },
+                    fast: { gwei: 0.01, time: '< 30 sec', usd: '$0.30' }
+                }
+            },
+            polygon: {
+                name: 'Polygon',
+                icon: '⬡',
+                status: 'low',
+                gas: {
+                    slow: { gwei: 30, time: '5-10 min', usd: '$0.05' },
+                    standard: { gwei: 50, time: '1-3 min', usd: '$0.10' },
+                    fast: { gwei: 80, time: '< 30 sec', usd: '$0.15' }
+                }
+            },
+            solana: {
+                name: 'Solana',
+                icon: '◎',
+                status: 'low',
+                gas: {
+                    slow: { gwei: 0.00025, time: 'varies', usd: '$0.01' },
+                    standard: { gwei: 0.0005, time: 'fast', usd: '$0.02' },
+                    fast: { gwei: 0.001, time: 'instant', usd: '$0.05' }
+                }
+            }
+        };
+        
+        function renderGas() {
+            const grid = document.getElementById('gasGrid');
+            grid.innerHTML = '';
+            
+            Object.entries(gasData).forEach(([chain, data]) => {
+                grid.innerHTML += `
+                    <div class="chain-card">
+                        <div class="chain-header">
+                            <span class="chain-icon">${data.icon}</span>
+                            <span class="chain-name">${data.name}</span>
+                            <span class="chain-status ${data.status}">${data.status.toUpperCase()}</span>
+                        </div>
+                        
+                        <div class="gas-row">
+                            <span class="gas-type">🐢 Slow</span>
+                            <span class="gas-price">${data.gas.slow.gwei} gwei (${data.gas.slow.usd})</span>
+                        </div>
+                        <div class="gas-row">
+                            <span class="gas-type">🚶 Standard</span>
+                            <span class="gas-price">${data.gas.standard.gwei} gwei (${data.gas.standard.usd})</span>
+                        </div>
+                        <div class="gas-row">
+                            <span class="gas-type">🚀 Fast</span>
+                            <span class="gas-price">${data.gas.fast.gwei} gwei (${data.gas.fast.usd})</span>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+        
+        function renderHistory() {
+            const chart = document.getElementById('historyChart');
+            // Mock 24h history data
+            const data = [30, 35, 28, 32, 25, 22, 20, 18, 25, 35, 45, 40, 35, 30, 28, 25, 22, 28, 35, 30, 25, 22, 20, 25];
+            const max = Math.max(...data);
+            
+            chart.innerHTML = data.map(d => `
+                <div class="chart-bar" style="height: ${(d/max)*100}%"></div>
+            `).join('');
+        }
+        
+        function renderRecommendations() {
+            const recs = document.getElementById('recommendations');
+            
+            const lowGasChains = Object.entries(gasData)
+                .filter(([_, d]) => d.status === 'low')
+                .map(([_, d]) => d.name);
+            
+            const highGasChains = Object.entries(gasData)
+                .filter(([_, d]) => d.status === 'high')
+                .map(([_, d]) => d.name);
+            
+            let html = '';
+            
+            if (lowGasChains.length > 0) {
+                html += `
+                    <div class="recommendation">
+                        <div class="rec-title">✅ Good Time to Transact</div>
+                        <div class="rec-text">
+                            Low gas on: ${lowGasChains.join(', ')}. 
+                            Consider using Base, Arbitrum, or Polygon for cheapest transactions.
+                        </div>
+                    </div>
+                `;
+            }
+            
+            if (highGasChains.length > 0) {
+                html += `
+                    <div class="recommendation" style="background: rgba(255,68,68,0.1); border-color: rgba(255,68,68,0.3);">
+                        <div class="rec-title" style="color: #ff4444;">⚠️ High Gas Warning</div>
+                        <div class="rec-text">
+                            High fees on: ${highGasChains.join(', ')}. 
+                            Consider waiting for gas to drop or use L2 chains.
+                        </div>
+                    </div>
+                `;
+            }
+            
+            html += `
+                <div class="recommendation" style="background: rgba(0,212,255,0.1); border-color: rgba(0,212,255,0.3);">
+                    <div class="rec-title" style="color: #00d4ff;">💡 Tip</div>
+                    <div class="rec-text">
+                        Best times to transact: Weekends, early mornings (UTC), and late nights. 
+                        Gas typically drops 30-50% during off-peak hours.
+                    </div>
+                </div>
+            `;
+            
+            recs.innerHTML = html;
+        }
+        
+        // Update every 30 seconds
+        renderGas();
+        renderHistory();
+        renderRecommendations();
+        
+        setInterval(() => {
+            // In production, fetch real gas prices
+            renderGas();
+            document.getElementById('lastUpdate').textContent = 'Just now';
+        }, 30000);
+    </script>
+</body>
+</html>

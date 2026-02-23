@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crypto Trading Journal</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: linear-gradient(135deg, #1a1a2e 0%, #0f0f23 100%); min-height: 100vh; padding: 20px; color: #fff; }
+        .container { max-width: 900px; margin: 0 auto; }
+        
+        h1 { text-align: center; margin-bottom: 30px; background: linear-gradient(90deg, #ff6b6b, #feca57); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        
+        .card { background: rgba(255,255,255,0.05); border-radius: 16px; padding: 24px; margin-bottom: 20px; border: 1px solid rgba(255,255,255,0.1); }
+        
+        .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-bottom: 20px; }
+        .stat-card { background: rgba(255,255,255,0.05); border-radius: 12px; padding: 15px; text-align: center; }
+        .stat-value { font-size: 1.5rem; font-weight: 700; }
+        .stat-label { font-size: 12px; color: #a0a0b0; margin-top: 5px; }
+        .positive { color: #00ff88; }
+        .negative { color: #ff4444; }
+        
+        .trade-row { display: flex; align-items: center; gap: 15px; padding: 15px; background: rgba(255,255,255,0.03); border-radius: 12px; margin-bottom: 10px; }
+        .trade-icon { font-size: 1.5rem; }
+        .trade-info { flex: 1; }
+        .trade-pair { font-weight: 600; }
+        .trade-date { font-size: 12px; color: #a0a0b0; }
+        .trade-type { padding: 4px 10px; border-radius: 12px; font-size: 12px; }
+        .trade-type.buy { background: rgba(0,255,136,0.2); color: #00ff88; }
+        .trade-type.sell { background: rgba(255,68,68,0.2); color: #ff4444; }
+        .trade-price { text-align: right; }
+        .trade-amount { font-weight: 600; }
+        .trade-pnl { font-size: 12px; }
+        
+        .btn { padding: 12px 20px; background: linear-gradient(90deg, #00d4ff, #7c3aed); border: none; border-radius: 8px; color: #fff; font-weight: 600; cursor: pointer; }
+        .btn-success { background: linear-gradient(90deg, #00ff88, #00cc66); }
+        .btn-danger { background: linear-gradient(90deg, #ff4444, #cc0000); }
+        
+        input, select { padding: 12px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 8px; color: #fff; width: 100%; margin-bottom: 12px; }
+        
+        .tab-buttons { display: flex; gap: 10px; margin-bottom: 20px; }
+        .tab-btn { padding: 10px 20px; background: rgba(255,255,255,0.1); border: none; border-radius: 8px; color: #fff; cursor: pointer; }
+        .tab-btn.active { background: #00d4ff; }
+        
+        .hidden { display: none; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📓 Trading Journal</h1>
+        
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-value positive" id="totalWins">$0</div>
+                <div class="stat-label">Total P&L</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="totalTrades">0</div>
+                <div class="stat-label">Total Trades</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="winRate">0%</div>
+                <div class="stat-label">Win Rate</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="avgWin">$0</div>
+                <div class="stat-label">Avg Win</div>
+            </div>
+        </div>
+        
+        <div class="tab-buttons">
+            <button class="tab-btn active" onclick="showTab('trades')">Trades</button>
+            <button class="tab-btn" onclick="showTab('add')">Add Trade</button>
+            <button class="tab-btn" onclick="showTab('stats')">Stats</button>
+        </div>
+        
+        <div id="trades">
+            <div id="tradesList"></div>
+        </div>
+        
+        <div id="add" class="hidden">
+            <div class="card">
+                <h3 style="margin-bottom: 20px;">Record a Trade</h3>
+                
+                <label>Pair</label>
+                <select id="tradePair">
+                    <option value="BTC/USD">BTC/USD</option>
+                    <option value="ETH/USD">ETH/USD</option>
+                    <option value="SOL/USD">SOL/USD</option>
+                    <option value="DOGE/USD">DOGE/USD</option>
+                    <option value="MEME/ETH">MEME/ETH</option>
+                    <option value="OTHER">Other</option>
+                </select>
+                
+                <label>Type</label>
+                <select id="tradeType">
+                    <option value="buy">Buy (Long)</option>
+                    <option value="sell">Sell (Short)</option>
+                </select>
+                
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                    <div>
+                        <label>Entry Price</label>
+                        <input type="number" id="entryPrice" placeholder="0.00">
+                    </div>
+                    <div>
+                        <label>Exit Price</label>
+                        <input type="number" id="exitPrice" placeholder="0.00">
+                    </div>
+                </div>
+                
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                    <div>
+                        <label>Size (USD)</label>
+                        <input type="number" id="tradeSize" placeholder="100">
+                    </div>
+                    <div>
+                        <label>Date</label>
+                        <input type="date" id="tradeDate">
+                    </div>
+                </div>
+                
+                <label>Notes (optional)</label>
+                <input type="text" id="tradeNotes" placeholder="Trade rationale, lessons learned...">
+                
+                <button class="btn btn-success" onclick="addTrade()">Record Trade</button>
+            </div>
+        </div>
+        
+        <div id="stats" class="hidden">
+            <div class="card">
+                <h3 style="margin-bottom: 15px;">Performance by Pair</h3>
+                <div id="pairStats"></div>
+            </div>
+            
+            <div class="card">
+                <h3 style="margin-bottom: 15px;">Monthly Summary</h3>
+                <div id="monthlyStats"></div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        let trades = JSON.parse(localStorage.getItem('tradingJournal')) || [
+            { id: 1, pair: 'BTC/USD', type: 'buy', entry: 65000, exit: 67500, size: 500, date: '2026-02-20', notes: 'Breakout trade' },
+            { id: 2, pair: 'ETH/USD', type: 'buy', entry: 3200, exit: 3450, size: 300, date: '2026-02-18', notes: 'Support bounce' },
+            { id: 3, pair: 'DOGE/USD', type: 'sell', entry: 0.08, exit: 0.085, size: 200, date: '2026-02-15', notes: 'Meme pump play' }
+        ];
+        
+        function showTab(tab) {
+            document.getElementById('trades').classList.add('hidden');
+            document.getElementById('add').classList.add('hidden');
+            document.getElementById('stats').classList.add('hidden');
+            document.getElementById(tab).classList.remove('hidden');
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            if (tab === 'trades') renderTrades();
+            if (tab === 'stats') renderStats();
+        }
+        
+        function calculatePnL(trade) {
+            if (trade.type === 'buy') {
+                return (trade.exit - trade.entry) / trade.entry * trade.size;
+            } else {
+                return (trade.entry - trade.exit) / trade.entry * trade.size;
+            }
+        }
+        
+        function renderTrades() {
+            const list = document.getElementById('tradesList');
+            
+            if (trades.length === 0) {
+                list.innerHTML = '<div class="card"><p style="color: #606070;">No trades recorded yet.</p></div>';
+                return;
+            }
+            
+            list.innerHTML = trades.map(trade => {
+                const pnl = calculatePnL(trade);
+                const pnlPercent = ((trade.exit - trade.entry) / trade.entry * 100).toFixed(1);
+                
+                return `
+                    <div class="trade-row">
+                        <div class="trade-icon">${trade.pair.includes('BTC') ? '₿' : trade.pair.includes('ETH') ? 'Ξ' : '💰'}</div>
+                        <div class="trade-info">
+                            <div class="trade-pair">${trade.pair}</div>
+                            <div class="trade-date">${trade.date}</div>
+                        </div>
+                        <span class="trade-type ${trade.type}">${trade.type.toUpperCase()}</span>
+                        <div class="trade-price">
+                            <div class="trade-amount">$${trade.size}</div>
+                            <div class="trade-pnl ${pnl >= 0 ? 'positive' : 'negative'}">
+                                ${pnl >= 0 ? '+' : ''}$${pnl.toFixed(2)} (${pnlPercent}%)
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+        
+        function renderStats() {
+            const totalPnL = trades.reduce((sum, t) => sum + calculatePnL(t), 0);
+            const wins = trades.filter(t => calculatePnL(t) > 0).length;
+            const winRate = trades.length > 0 ? (wins / trades.length * 100).toFixed(0) : 0;
+            const avgWin = wins > 0 ? totalPnL / wins : 0;
+            
+            document.getElementById('totalWins').textContent = (totalPnL >= 0 ? '+' : '') + '$' + totalPnL.toFixed(0);
+            document.getElementById('totalWins').className = 'stat-value ' + (totalPnL >= 0 ? 'positive' : 'negative');
+            document.getElementById('totalTrades').textContent = trades.length;
+            document.getElementById('winRate').textContent = winRate + '%';
+            document.getElementById('avgWin').textContent = '$' + avgWin.toFixed(0);
+            
+            // Pair stats
+            const pairStats = {};
+            trades.forEach(trade => {
+                if (!pairStats[trade.pair]) {
+                    pairStats[trade.pair] = { trades: 0, pnl: 0 };
+                }
+                pairStats[trade.pair].trades++;
+                pairStats[trade.pair].pnl += calculatePnL(trade);
+            });
+            
+            const pairStatsDiv = document.getElementById('pairStats');
+            pairStatsDiv.innerHTML = Object.entries(pairStats).map(([pair, stats]) => `
+                <div class="trade-row">
+                    <div class="trade-pair">${pair}</div>
+                    <div>${stats.trades} trades</div>
+                    <div class="${stats.pnl >= 0 ? 'positive' : 'negative'}">
+                        ${stats.pnl >= 0 ? '+' : ''}$${stats.pnl.toFixed(2)}
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        function addTrade() {
+            const pair = document.getElementById('tradePair').value;
+            const type = document.getElementById('tradeType').value;
+            const entry = parseFloat(document.getElementById('entryPrice').value);
+            const exit = parseFloat(document.getElementById('exitPrice').value);
+            const size = parseFloat(document.getElementById('tradeSize').value);
+            const date = document.getElementById('tradeDate').value || new Date().toISOString().split('T')[0];
+            const notes = document.getElementById('tradeNotes').value;
+            
+            if (!entry || !exit || !size) return alert('Please fill required fields');
+            
+            trades.unshift({ id: Date.now(), pair, type, entry, exit, size, date, notes });
+            localStorage.setItem('tradingJournal', JSON.stringify(trades));
+            
+            // Clear form
+            document.getElementById('entryPrice').value = '';
+            document.getElementById('exitPrice').value = '';
+            document.getElementById('tradeSize').value = '';
+            document.getElementById('tradeNotes').value = '';
+            
+            renderTrades();
+            showTab('trades');
+            alert('Trade recorded!');
+        }
+        
+        renderTrades();
+    </script>
+</body>
+</html>

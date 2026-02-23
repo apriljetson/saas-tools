@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crypto Lab Dashboard</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: linear-gradient(135deg, #1a1a2e 0%, #0f0f23 100%); min-height: 100vh; padding: 20px; color: #fff; }
+        .container { max-width: 1200px; margin: 0 auto; }
+        
+        h1 { text-align: center; margin-bottom: 40px; background: linear-gradient(90deg, #00ff88, #00d4ff, #7c3aed); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; }
+        
+        .card { background: rgba(255,255,255,0.05); border-radius: 20px; padding: 30px; border: 1px solid rgba(255,255,255,0.1); text-align: center; transition: transform 0.3s, box-shadow 0.3s; cursor: pointer; }
+        .card:hover { transform: translateY(-5px); box-shadow: 0 20px 40px rgba(0,212,255,0.2); }
+        
+        .icon { font-size: 4rem; margin-bottom: 20px; display: block; }
+        
+        .card h3 { font-size: 1.4rem; margin-bottom: 10px; }
+        .card p { color: #a0a0b0; font-size: 14px; line-height: 1.6; }
+        
+        .tag { display: inline-block; padding: 4px 12px; background: rgba(0,212,255,0.2); color: #00d4ff; border-radius: 20px; font-size: 12px; margin-top: 15px; }
+        .tag.ready { background: rgba(0,255,136,0.2); color: #00ff88; }
+        .tag.coming { background: rgba(255,136,0,0.2); color: #ff8800; }
+        
+        .section-title { font-size: 1.2rem; color: #a0a0b0; margin: 40px 0 20px; text-align: center; }
+        
+        .quick-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-bottom: 40px; }
+        .stat-box { background: rgba(255,255,255,0.05); border-radius: 12px; padding: 20px; text-align: center; }
+        .stat-value { font-size: 1.8rem; font-weight: 700; }
+        .stat-label { font-size: 12px; color: #a0a0b0; margin-top: 5px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔬 Crypto Lab</h1>
+        
+        <div class="quick-stats">
+            <div class="stat-box">
+                <div class="stat-value" style="color: #00ff88;">$0</div>
+                <div class="stat-label">Portfolio Value</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-value">0</div>
+                <div class="stat-label">Active Alerts</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-value">0</div>
+                <div class="stat-label">Trades Logged</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-value">0</div>
+                <div class="stat-label">Wallets</div>
+            </div>
+        </div>
+        
+        <h2 class="section-title">Portfolio Management</h2>
+        <div class="grid">
+            <div class="card" onclick="window.open('vault.html', '_blank')">
+                <span class="icon">🔐</span>
+                <h3>Vault</h3>
+                <p>Secure wallet tracking - Cold, Hot, and New Coin wallets</p>
+                <span class="tag ready">Ready</span>
+            </div>
+            
+            <div class="card" onclick="window.open('portfolio.html', '_blank')">
+                <span class="icon">💎</span>
+                <h3>Portfolio</h3>
+                <p>Track holdings, P&L, and portfolio distribution</p>
+                <span class="tag ready">Ready</span>
+            </div>
+        </div>
+        
+        <h2 class="section-title">Trading Tools</h2>
+        <div class="grid">
+            <div class="card" onclick="window.open('price-alerts.html', '_blank')">
+                <span class="icon">🔔</span>
+                <h3>Price Alerts</h3>
+                <p>Get notified when coins hit your target prices</p>
+                <span class="tag ready">Ready</span>
+            </div>
+            
+            <div class="card" onclick="window.open('gas-tracker.html', '_blank')">
+                <span class="icon">⛽</span>
+                <h3>Gas Tracker</h3>
+                <p>Monitor gas prices across chains - find optimal transaction times</p>
+                <span class="tag ready">Ready</span>
+            </div>
+            
+            <div class="card" onclick="window.open('trading-journal.html', '_blank')">
+                <span class="icon">📓</span>
+                <h3>Trading Journal</h3>
+                <p>Record trades, track performance, analyze wins/losses</p>
+                <span class="tag ready">Ready</span>
+            </div>
+        </div>
+        
+        <h2 class="section-title">Coming Soon</h2>
+        <div class="grid">
+            <div class="card">
+                <span class="icon">🐋</span>
+                <h3>Whale Tracker</h3>
+                <p>Monitor large wallet movements and smart money</p>
+                <span class="tag coming">Coming Soon</span>
+            </div>
+            
+            <div class="card">
+                <span class="icon">📡</span>
+                <h3>New Coin Scanner</h3>
+                <p>Detect new token pairs on DEX with high volume</p>
+                <span class="tag coming">Coming Soon</span>
+            </div>
+            
+            <div class="card">
+                <span class="icon">📊</span>
+                <h3>Tax Calculator</h3>
+                <p>Calculate capital gains for tax reporting</p>
+                <span class="tag coming">Coming Soon</span>
+            </div>
+            
+            <div class="card">
+                <span class="icon">🏦</span>
+                <h3>DeFi Dashboard</h3>
+                <p>Track staking, lending, and yield farming positions</p>
+                <span class="tag coming">Coming Soon</span>
+            </div>
+        </div>
+        
+        <h2 class="section-title">Security</h2>
+        <div class="grid">
+            <div class="card" onclick="window.open('docs/crypto-storage-best-practices.html', '_blank')">
+                <span class="icon">🛡️</span>
+                <h3>Security Guide</h3>
+                <p>Best practices for securing your crypto assets</p>
+                <span class="tag ready">Ready</span>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
