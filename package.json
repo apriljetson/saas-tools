@@ -1,0 +1,22 @@
+{
+  "name": "saas-tools",
+  "version": "1.0.0",
+  "description": "AI-powered SaaS tools - Prompt Generator, Crypto Tracker, Content Scheduler, Automation",
+  "main": "test-runner.js",
+  "scripts": {
+    "test": "node test-runner.js",
+    "validate": "bash orchestrate.sh validate",
+    "serve": "bash orchestrate.sh serve",
+    "deploy": "bash orchestrate.sh deploy",
+    "all": "npm run test && npm run validate"
+  },
+  "keywords": [
+    "ai",
+    "productivity",
+    "crypto",
+    "automation",
+    "tools"
+  ],
+  "author": "",
+  "license": "MIT"
+}
