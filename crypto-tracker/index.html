@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crypto Portfolio Tracker</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); min-height: 100vh; padding: 20px; color: #fff; }
+        .container { max-width: 900px; margin: 0 auto; }
+        h1 { text-align: center; margin-bottom: 30px; }
+        
+        .card { background: rgba(255,255,255,0.05); border-radius: 16px; padding: 24px; margin-bottom: 20px; border: 1px solid rgba(255,255,255,0.1); }
+        
+        .total-value { font-size: 3rem; font-weight: 700; color: #00ff88; text-align: center; }
+        .total-label { text-align: center; color: #a0a0b0; margin-bottom: 20px; }
+        
+        .asset-row { display: flex; justify-content: space-between; align-items: center; padding: 16px; background: rgba(255,255,255,0.05); border-radius: 12px; margin-bottom: 12px; }
+        .asset-info { display: flex; align-items: center; gap: 12px; }
+        .asset-icon { width: 40px; height: 40px; border-radius: 50%; background: #333; }
+        .asset-name { font-weight: 600; }
+        .asset-symbol { color: #a0a0b0; font-size: 14px; }
+        .asset-value { text-align: right; }
+        .asset-amount { font-size: 18px; font-weight: 600; }
+        .asset-usd { color: #a0a0b0; font-size: 14px; }
+        .asset-change { font-size: 14px; }
+        .positive { color: #00ff88; }
+        .negative { color: #ff4444; }
+        
+        .btn { padding: 12px 24px; background: linear-gradient(90deg, #00d4ff, #7c3aed); border: none; border-radius: 8px; color: #fff; font-weight: 600; cursor: pointer; }
+        .btn:hover { transform: translateY(-2px); }
+        
+        input, select { padding: 12px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 8px; color: #fff; }
+        
+        .chart { height: 200px; background: rgba(255,255,255,0.05); border-radius: 12px; display: flex; align-items: flex-end; padding: 20px; gap: 8px; }
+        .chart-bar { flex: 1; background: linear-gradient(to top, #00d4ff, #7c3aed); border-radius: 4px 4px 0 0; min-height: 20px; }
+        
+        .tab-buttons { display: flex; gap: 10px; margin-bottom: 20px; }
+        .tab-btn { padding: 10px 20px; background: rgba(255,255,255,0.1); border: none; border-radius: 8px; color: #fff; cursor: pointer; }
+        .tab-btn.active { background: #00d4ff; }
+        
+        .hidden { display: none; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>💎 Crypto Portfolio Tracker</h1>
+        
+        <div class="card">
+            <div class="total-label">Total Portfolio Value</div>
+            <div class="total-value" id="totalValue">$0.00</div>
+            <div style="text-align: center; margin-top: 10px;">
+                <span class="positive" id="totalChange">+$0.00 (0%)</span>
+                <span style="color: #a0a0b0; margin-left: 10px;">24h</span>
+            </div>
+        </div>
+        
+        <div class="card">
+            <div class="tab-buttons">
+                <button class="tab-btn active" onclick="showTab('holdings')">Holdings</button>
+                <button class="tab-btn" onclick="showTab('add')">Add Asset</button>
+                <button class="tab-btn" onclick="showTab('alerts')">Alerts</button>
+            </div>
+            
+            <div id="holdings">
+                <div id="assetsList"></div>
+            </div>
+            
+            <div id="add" class="hidden">
+                <select id="addCoin" style="width: 100%; margin-bottom: 12px;">
+                    <option value="BTC">Bitcoin (BTC)</option>
+                    <option value="ETH">Ethereum (ETH)</option>
+                    <option value="SOL">Solana (SOL)</option>
+                    <option value="BNB">BNB</option>
+                    <option value="XRP">XRP</option>
+                    <option value="ADA">Cardano (ADA)</option>
+                    <option value="DOGE">Dogecoin (DOGE)</option>
+                    <option value="SOL">Solana (SOL)</option>
+                    <option value="DOT">Polkadot (DOT)</option>
+                    <option value="MATIC">Polygon (MATIC)</option>
+                </select>
+                <input type="number" id="addAmount" placeholder="Amount" style="width: 100%; margin-bottom: 12px;">
+                <input type="number" id="addPrice" placeholder="Buy price (USD)" style="width: 100%; margin-bottom: 12px;">
+                <button class="btn" onclick="addAsset()" style="width: 100%;">Add Asset</button>
+            </div>
+            
+            <div id="alerts" class="hidden">
+                <div id="alertsList"></div>
+                <input type="text" id="alertCoin" placeholder="Coin (e.g., BTC)" style="width: 48%;">
+                <input type="number" id="alertPrice" placeholder="Price" style="width: 48%;">
+                <button class="btn" onclick="addAlert()" style="width: 100%; margin-top: 12px;">Set Alert</button>
+            </div>
+        </div>
+        
+        <div class="card">
+            <h3 style="margin-bottom: 15px;">Portfolio Chart (7 Days)</h3>
+            <div class="chart" id="chart"></div>
+        </div>
+    </div>
+    
+    <script>
+        // Mock price data
+        const prices = {
+            BTC: { price: 67500, change: 2.3, icon: '₿' },
+            ETH: { price: 3450, change: 1.8, icon: 'Ξ' },
+            SOL: { price: 145, change: -0.5, icon: '◎' },
+            BNB: { price: 580, change: 0.9, icon: 'B' },
+            XRP: { price: 0.52, change: 3.2, icon: 'X' },
+            ADA: { price: 0.45, change: -1.2, icon: 'A' },
+            DOGE: { price: 0.085, change: 5.1, icon: 'D' },
+            DOT: { price: 7.2, change: -0.8, icon: '●' },
+            MATIC: { price: 0.58, change: 1.1, icon: 'M' }
+        };
+        
+        let portfolio = JSON.parse(localStorage.getItem('portfolio')) || [
+            { coin: 'BTC', amount: 0.5, buyPrice: 45000 },
+            { coin: 'ETH', amount: 2.0, buyPrice: 2800 },
+            { coin: 'SOL', amount: 10, buyPrice: 100 }
+        ];
+        
+        let alerts = JSON.parse(localStorage.getItem('alerts')) || [];
+        
+        function showTab(tab) {
+            document.getElementById('holdings').classList.add('hidden');
+            document.getElementById('add').classList.add('hidden');
+            document.getElementById('alerts').classList.add('hidden');
+            document.getElementById(tab).classList.remove('hidden');
+            
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+        }
+        
+        function renderPortfolio() {
+            const list = document.getElementById('assetsList');
+            let total = 0;
+            let totalCost = 0;
+            
+            list.innerHTML = portfolio.map(asset => {
+                const data = prices[asset.coin] || { price: 0, change: 0, icon: '?' };
+                const value = asset.amount * data.price;
+                const cost = asset.amount * asset.buyPrice;
+                const pnl = value - cost;
+                const pnlPercent = ((value - cost) / cost * 100).toFixed(1);
+                
+                total += value;
+                totalCost += cost;
+                
+                return `
+                    <div class="asset-row">
+                        <div class="asset-info">
+                            <div class="asset-icon" style="display: flex; align-items: center; justify-content: center; font-size: 20px;">${data.icon}</div>
+                            <div>
+                                <div class="asset-name">${asset.coin}</div>
+                                <div class="asset-symbol">${asset.amount} coins</div>
+                            </div>
+                        </div>
+                        <div class="asset-value">
+                            <div class="asset-amount">$${value.toLocaleString()}</div>
+                            <div class="asset-usd">$${data.price.toLocaleString()}</div>
+                            <div class="asset-change ${pnl >= 0 ? 'positive' : 'negative'}">
+                                ${pnl >= 0 ? '+' : ''}$${pnl.toFixed(2)} (${pnlPercent}%)
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+            
+            document.getElementById('totalValue').textContent = '$' + total.toLocaleString();
+            const totalChange = total - totalCost;
+            const totalChangePercent = ((total - totalCost) / totalCost * 100).toFixed(1);
+            document.getElementById('totalChange').textContent = (totalChange >= 0 ? '+' : '') + '$' + totalChange.toFixed(2) + ' (' + totalChangePercent + '%)';
+            document.getElementById('totalChange').className = totalChange >= 0 ? 'positive' : 'negative';
+            
+            renderChart();
+            renderAlerts();
+        }
+        
+        function addAsset() {
+            const coin = document.getElementById('addCoin').value;
+            const amount = parseFloat(document.getElementById('addAmount').value);
+            const buyPrice = parseFloat(document.getElementById('addPrice').value);
+            
+            if (!amount || !buyPrice) return alert('Please fill all fields');
+            
+            const existing = portfolio.find(a => a.coin === coin);
+            if (existing) {
+                existing.amount += amount;
+            } else {
+                portfolio.push({ coin, amount, buyPrice });
+            }
+            
+            localStorage.setItem('portfolio', JSON.stringify(portfolio));
+            document.getElementById('addAmount').value = '';
+            document.getElementById('addPrice').value = '';
+            renderPortfolio();
+        }
+        
+        function addAlert() {
+            const coin = document.getElementById('alertCoin').value.toUpperCase();
+            const price = parseFloat(document.getElementById('alertPrice').value);
+            
+            if (!coin || !price) return alert('Please fill all fields');
+            
+            alerts.push({ coin, price });
+            localStorage.setItem('alerts', JSON.stringify(alerts));
+            document.getElementById('alertCoin').value = '';
+            document.getElementById('alertPrice').value = '';
+            renderAlerts();
+        }
+        
+        function renderAlerts() {
+            const list = document.getElementById('alertsList');
+            if (alerts.length === 0) {
+                list.innerHTML = '<p style="color: #606070;">No alerts set</p>';
+                return;
+            }
+            
+            list.innerHTML = alerts.map((alert, i) => {
+                const current = prices[alert.coin]?.price || 0;
+                return `
+                    <div class="asset-row">
+                        <div>
+                            <div class="asset-name">${alert.coin}</div>
+                            <div class="asset-symbol">Alert at $${alert.price}</div>
+                        </div>
+                        <div class="asset-value">
+                            <div class="asset-amount">$${current.toLocaleString()}</div>
+                            <div class="asset-change ${current >= alert.price ? 'positive' : 'negative'}">
+                                ${current >= alert.price ? 'Above' : 'Below'} target
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+        
+        function renderChart() {
+            const chart = document.getElementById('chart');
+            const data = [65, 72, 68, 75, 78, 82, 80]; // Mock 7-day data
+            const max = Math.max(...data);
+            
+            chart.innerHTML = data.map(d => `
+                <div class="chart-bar" style="height: ${(d/max)*100}%"></div>
+            `).join('');
+        }
+        
+        renderPortfolio();
+    </script>
+</body>
+</html>

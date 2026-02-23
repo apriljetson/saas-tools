@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Tools Dashboard</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); min-height: 100vh; padding: 20px; color: #fff; }
+        .container { max-width: 1200px; margin: 0 auto; }
+        
+        h1 { text-align: center; margin-bottom: 40px; background: linear-gradient(90deg, #00d4ff, #7c3aed); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; }
+        
+        .card { background: rgba(255,255,255,0.05); border-radius: 20px; padding: 30px; border: 1px solid rgba(255,255,255,0.1); text-align: center; transition: transform 0.3s, box-shadow 0.3s; cursor: pointer; }
+        .card:hover { transform: translateY(-5px); box-shadow: 0 20px 40px rgba(0,212,255,0.2); }
+        
+        .icon { font-size: 4rem; margin-bottom: 20px; display: block; }
+        
+        .card h3 { font-size: 1.4rem; margin-bottom: 10px; }
+        .card p { color: #a0a0b0; font-size: 14px; line-height: 1.6; }
+        
+        .tag { display: inline-block; padding: 4px 12px; background: rgba(0,212,255,0.2); color: #00d4ff; border-radius: 20px; font-size: 12px; margin-top: 15px; }
+        
+        .section-title { font-size: 1.2rem; color: #a0a0b0; margin: 40px 0 20px; text-align: center; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 AI Tools Dashboard</h1>
+        
+        <h2 class="section-title">Productivity Tools</h2>
+        <div class="grid">
+            <div class="card" onclick="openTool('prompt-generator')">
+                <span class="icon">⚡</span>
+                <h3>Prompt Generator</h3>
+                <p>Create, organize, and reuse AI prompts for any task. Save your best prompts.</p>
+                <span class="tag">Ready</span>
+            </div>
+            
+            <div class="card" onclick="openTool('crypto-tracker')">
+                <span class="icon">💎</span>
+                <h3>Crypto Tracker</h3>
+                <p>Track portfolio value, set price alerts, monitor DeFi positions.</p>
+                <span class="tag">Ready</span>
+            </div>
+            
+            <div class="card" onclick="openTool('content-scheduler')">
+                <span class="icon">📅</span>
+                <h3>Content Scheduler</h3>
+                <p>Schedule posts across Twitter, LinkedIn and more. Visual calendar.</p>
+                <span class="tag">Ready</span>
+            </div>
+            
+            <div class="card" onclick="openTool('automation-tools')">
+               icon"> <span class="🤖</span>
+                <h3>Automation Tools</h3>
+                <p>File organizer, system monitor, and more automated scripts.</p>
+                <span class="tag">Ready</span>
+            </div>
+        </div>
+        
+        <h2 class="section-title">Coming Soon</h2>
+        <div class="grid">
+            <div class="card">
+                <span class="icon">📊</span>
+                <h3>Analytics Dashboard</h3>
+                <p>Unified analytics across all platforms and tools.</p>
+                <span class="tag">Soon</span>
+            </div>
+            
+            <div class="card">
+                <span class="icon">🔗</span>
+                <h3>API Integrations</h3>
+                <p>Connect external services and automate workflows.</p>
+                <span class="tag">Soon</span>
+            </div>
+            
+            <div class="card">
+                <span class="icon">🧠</span>
+                <h3>Memory System</h3>
+                <p>Persistent memory across sessions for better assistance.</p>
+                <span class="tag">Soon</span>
+            </div>
+            
+            <div class="card">
+                <span class="icon">🌐</span>
+                <h3>Web Agent</h3>
+                <p>AI-powered web browsing and task automation.</p>
+                <span class="tag">Soon</span>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        function openTool(tool) {
+            const urls = {
+                'prompt-generator': 'prompt-generator/index.html',
+                'crypto-tracker': 'crypto-tracker/index.html',
+                'content-scheduler': 'content-scheduler/index.html',
+                'automation-tools': 'automation-tools/README.md'
+            };
+            
+            if (urls[tool]) {
+                window.open(urls[tool], '_blank');
+            }
+        }
+    </script>
+</body>
+</html>

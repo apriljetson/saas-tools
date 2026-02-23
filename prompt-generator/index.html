@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Prompt Generator</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); min-height: 100vh; padding: 20px; color: #fff; }
+        .container { max-width: 900px; margin: 0 auto; }
+        h1 { text-align: center; margin-bottom: 30px; background: linear-gradient(90deg, #00d4ff, #7c3aed); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        @media (max-width: 768px) { .grid { grid-template-columns: 1fr; } }
+        
+        .card { background: rgba(255,255,255,0.05); border-radius: 16px; padding: 24px; border: 1px solid rgba(255,255,255,0.1); }
+        
+        label { display: block; margin-bottom: 8px; color: #a0a0b0; font-size: 14px; }
+        select, input, textarea { width: 100%; padding: 12px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 8px; color: #fff; font-size: 14px; margin-bottom: 16px; }
+        select:focus, input:focus, textarea:focus { outline: none; border-color: #00d4ff; }
+        
+        button { width: 100%; padding: 14px; background: linear-gradient(90deg, #00d4ff, #7c3aed); border: none; border-radius: 8px; color: #fff; font-size: 16px; font-weight: 600; cursor: pointer; }
+        button:hover { transform: translateY(-2px); }
+        
+        #output { background: rgba(0,0,0,0.3); padding: 20px; border-radius: 8px; min-height: 150px; white-space: pre-wrap; font-family: monospace; font-size: 13px; line-height: 1.6; }
+        
+        .saved { margin-top: 20px; }
+        .saved-item { background: rgba(255,255,255,0.05); padding: 12px; border-radius: 8px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; }
+        .saved-item span { font-size: 14px; }
+        .saved-item button { width: auto; padding: 6px 12px; font-size: 12px; }
+        
+        .category-btn { padding: 8px 16px; background: rgba(255,255,255,0.1); border: none; border-radius: 20px; color: #fff; margin: 4px; cursor: pointer; }
+        .category-btn.active { background: #00d4ff; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>⚡ AI Prompt Generator</h1>
+        
+        <div class="grid">
+            <div class="card">
+                <h3 style="margin-bottom: 16px;">Generate Prompt</h3>
+                
+                <label>Category</label>
+                <select id="category" onchange="loadTypes()">
+                    <option value="">Select category...</option>
+                    <option value="content">Content Creation</option>
+                    <option value="business">Business</option>
+                    <option value="technical">Technical</option>
+                    <option value="research">Research</option>
+                    <option value="personal">Personal</option>
+                </select>
+                
+                <label>Type</label>
+                <select id="type">
+                    <option value="">Select type first...</option>
+                </select>
+                
+                <div id="dynamicParams"></div>
+                
+                <button onclick="generatePrompt()">Generate Prompt</button>
+            </div>
+            
+            <div class="card">
+                <h3 style="margin-bottom: 16px;">Output</h3>
+                <div id="output">Your generated prompt will appear here...</div>
+                <button onclick="copyPrompt()" style="margin-top: 12px;">Copy to Clipboard</button>
+            </div>
+        </div>
+        
+        <div class="card saved">
+            <h3 style="margin-bottom: 16px;">Saved Prompts</h3>
+            <div id="savedList">
+                <p style="color: #606070; font-size: 14px;">No saved prompts yet.</p>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        const templates = {
+            content: {
+                blog: { name: "Blog Post", params: ["topic", "sections", "tone", "length"] },
+                social: { name: "Social Media", params: ["platform", "topic", "hashtags", "length"] },
+                video: { name: "Video Script", params: ["topic", "duration", "points"] }
+            },
+            business: {
+                email: { name: "Email", params: ["subject", "purpose", "tone"] },
+                proposal: { name: "Proposal", params: ["project", "timeline", "budget"] },
+                report: { name: "Report", params: ["type", "period"] }
+            },
+            technical: {
+                codeReview: { name: "Code Review", params: ["language", "focus"] },
+                architecture: { name: "Architecture", params: ["system_type", "use_case"] },
+                debug: { name: "Debug", params: ["language", "error"] }
+            },
+            research: {
+                analysis: { name: "Analysis", params: ["topic", "type"] },
+                summary: { name: "Summary", params: ["doc_type", "length"] },
+                competitor: { name: "Competitor", params: ["competitor", "market"] }
+            },
+            personal: {
+                creative: { name: "Creative Writing", params: ["style", "topic", "tone"] },
+                learning: { name: "Learning Plan", params: ["skill", "level", "goal"] }
+            }
+        };
+        
+        function loadTypes() {
+            const category = document.getElementById('category').value;
+            const typeSelect = document.getElementById('type');
+            const paramsDiv = document.getElementById('dynamicParams');
+            
+            typeSelect.innerHTML = '<option value="">Select type...</option>';
+            paramsDiv.innerHTML = '';
+            
+            if (category && templates[category]) {
+                Object.keys(templates[category]).forEach(type => {
+                    const option = document.createElement('option');
+                    option.value = type;
+                    option.textContent = templates[category][type].name;
+                    typeSelect.appendChild(option);
+                });
+                
+                typeSelect.onchange = loadParams;
+            }
+        }
+        
+        function loadParams() {
+            const category = document.getElementById('category').value;
+            const type = document.getElementById('type').value;
+            const paramsDiv = document.getElementById('dynamicParams');
+            
+            paramsDiv.innerHTML = '';
+            
+            if (category && type && templates[category][type]) {
+                templates[category][type].params.forEach(param => {
+                    const label = document.createElement('label');
+                    label.textContent = param.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+                    
+                    const input = document.createElement('input');
+                    input.id = 'param_' + param;
+                    input.placeholder = `Enter ${param.replace(/_/g, ' ')}...`;
+                    
+                    paramsDiv.appendChild(label);
+                    paramsDiv.appendChild(input);
+                });
+            }
+        }
+        
+        function generatePrompt() {
+            const category = document.getElementById('category').value;
+            const type = document.getElementById('type').value;
+            
+            if (!category || !type) {
+                alert('Please select category and type');
+                return;
+            }
+            
+            const params = {};
+            if (templates[category][type].params) {
+                templates[category][type].params.forEach(param => {
+                    params[param] = document.getElementById('param_' + param)?.value || '';
+                });
+            }
+            
+            // Simple prompt generation based on templates
+            let prompt = '';
+            switch(type) {
+                case 'blog':
+                    prompt = `Write a comprehensive blog post about "${params.topic || '[topic]'}". Include ${params.sections || '5'} main sections with subheadings. Tone: ${params.tone || 'professional'}. Length: ${params.length || '1000'} words.`;
+                    break;
+                case 'social':
+                    prompt = `Create a ${params.platform || 'Twitter'} post about "${params.topic || '[topic]'}", ${params.hashtags || '5'} relevant hashtags, under ${params.length || '280'} characters.`;
+                    break;
+                case 'email':
+                    prompt = `Write a professional email. Subject: ${params.subject || '[subject]'}. Purpose: ${params.purpose || '[purpose]'}. Tone: ${params.tone || 'professional'}.`;
+                    break;
+                case 'codeReview':
+                    prompt = `Review this ${params.language || 'code'} for: bugs, security, performance. Focus on: ${params.focus || 'best practices'}.`;
+                    break;
+                default:
+                    prompt = `Generate a ${type} for: ${JSON.stringify(params)}`;
+            }
+            
+            document.getElementById('output').textContent = prompt;
+            savePrompt(type, category, prompt);
+        }
+        
+        function copyPrompt() {
+            const text = document.getElementById('output').textContent;
+            navigator.clipboard.writeText(text);
+            alert('Copied!');
+        }
+        
+        function savePrompt(name, category, prompt) {
+            const saved = JSON.parse(localStorage.getItem('savedPrompts') || '[]');
+            saved.unshift({ name, category, prompt, date: new Date().toISOString() });
+            localStorage.setItem('savedPrompts', JSON.stringify(saved.slice(0, 10)));
+            renderSaved();
+        }
+        
+        function renderSaved() {
+            const saved = JSON.parse(localStorage.getItem('savedPrompts') || '[]');
+            const list = document.getElementById('savedList');
+            
+            if (saved.length === 0) {
+                list.innerHTML = '<p style="color: #606070; font-size: 14px;">No saved prompts yet.</p>';
+                return;
+            }
+            
+            list.innerHTML = saved.map((s, i) => `
+                <div class="saved-item">
+                    <span>${s.name} - ${new Date(s.date).toLocaleDateString()}</span>
+                    <button onclick="loadSaved(${i})">Load</button>
+                </div>
+            `).join('');
+        }
+        
+        function loadSaved(i) {
+            const saved = JSON.parse(localStorage.getItem('savedPrompts') || '[]');
+            document.getElementById('output').textContent = saved[i].prompt;
+        }
+        
+        renderSaved();
+    </script>
+</body>
+</html>

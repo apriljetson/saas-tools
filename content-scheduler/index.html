@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Content Scheduler</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); min-height: 100vh; padding: 20px; color: #fff; }
+        .container { max-width: 900px; margin: 0 auto; }
+        h1 { text-align: center; margin-bottom: 30px; }
+        
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        @media (max-width: 768px) { .grid { grid-template-columns: 1fr; } }
+        
+        .card { background: rgba(255,255,255,0.05); border-radius: 16px; padding: 24px; border: 1px solid rgba(255,255,255,0.1); }
+        
+        label { display: block; margin-bottom: 8px; color: #a0a0b0; font-size: 14px; }
+        select, input, textarea { width: 100%; padding: 12px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 8px; color: #fff; font-size: 14px; margin-bottom: 16px; }
+        textarea { min-height: 120px; resize: vertical; }
+        
+        button { padding: 12px 24px; background: linear-gradient(90deg, #00d4ff, #7c3aed); border: none; border-radius: 8px; color: #fff; font-weight: 600; cursor: pointer; }
+        button:hover { transform: translateY(-2px); }
+        
+        .platforms { display: flex; gap: 10px; margin-bottom: 16px; }
+        .platform { padding: 8px 16px; background: rgba(255,255,255,0.1); border-radius: 20px; font-size: 14px; cursor: pointer; }
+        .platform.active { background: #00d4ff; }
+        
+        .schedule-item { background: rgba(255,255,255,0.05); padding: 16px; border-radius: 12px; margin-bottom: 12px; }
+        .schedule-header { display: flex; justify-content: space-between; margin-bottom: 8px; }
+        .schedule-platform { font-size: 12px; color: #00d4ff; }
+        .schedule-time { font-size: 12px; color: #a0a0b0; }
+        .schedule-content { font-size: 14px; }
+        
+        .calendar { display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; }
+        .cal-day { background: rgba(255,255,255,0.05); padding: 10px; border-radius: 8px; text-align: center; min-height: 80px; }
+        .cal-day-header { font-size: 12px; color: #a0a0b0; margin-bottom: 8px; }
+        .cal-dot { width: 8px; height: 8px; background: #00d4ff; border-radius: 50%; margin: 2px auto; }
+        
+        .queue-stats { display: flex; gap: 20px; margin-bottom: 20px; }
+        .stat { text-align: center; }
+        .stat-value { font-size: 2rem; font-weight: 700; color: #00d4ff; }
+        .stat-label { font-size: 12px; color: #a0a0b0; }
+        
+        .tabs { display: flex; gap: 10px; margin-bottom: 20px; }
+        .tab { padding: 10px 20px; background: rgba(255,255,255,0.1); border: none; border-radius: 8px; color: #fff; cursor: pointer; }
+        .tab.active { background: #00d4ff; }
+        
+        .hidden { display: none; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📅 Content Scheduler</h1>
+        
+        <div class="queue-stats">
+            <div class="stat">
+                <div class="stat-value" id="scheduledCount">3</div>
+                <div class="stat-label">Scheduled</div>
+            </div>
+            <div class="stat">
+                <div class="stat-value" id="sentCount">12</div>
+                <div class="stat-label">Sent</div>
+            </div>
+            <div class="stat">
+                <div class="stat-value" id="draftCount">5</div>
+                <div class="stat-label">Drafts</div>
+            </div>
+        </div>
+        
+        <div class="tabs">
+            <button class="tab active" onclick="showTab('schedule')">Schedule</button>
+            <button class="tab" onclick="showTab('queue')">Queue</button>
+            <button class="tab" onclick="showTab('calendar')">Calendar</button>
+        </div>
+        
+        <div id="schedule" class="grid">
+            <div class="card">
+                <h3 style="margin-bottom: 16px;">New Post</h3>
+                
+                <label>Platform</label>
+                <div class="platforms">
+                    <span class="platform active" data-platform="twitter" onclick="selectPlatform('twitter')">𝕏 Twitter</span>
+                    <span class="platform" data-platform="linkedin" onclick="selectPlatform('linkedin')">💼 LinkedIn</span>
+                </div>
+                
+                <label>Content</label>
+                <textarea id="postContent" placeholder="What's on your mind?"></textarea>
+                
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                    <div>
+                        <label>Date</label>
+                        <input type="date" id="postDate">
+                    </div>
+                    <div>
+                        <label>Time</label>
+                        <input type="time" id="postTime">
+                    </div>
+                </div>
+                
+                <button onclick="schedulePost()" style="width: 100%;">Schedule Post</button>
+            </div>
+            
+            <div class="card">
+                <h3 style="margin-bottom: 16px;">Upcoming Posts</h3>
+                <div id="upcomingList"></div>
+            </div>
+        </div>
+        
+        <div id="queue" class="hidden">
+            <div class="card">
+                <h3 style="margin-bottom: 16px;">Post Queue</h3>
+                <div id="queueList"></div>
+            </div>
+        </div>
+        
+        <div id="calendar" class="hidden">
+            <div class="card">
+                <h3 style="margin-bottom: 16px;">February 2026</h3>
+                <div class="calendar" id="calendarGrid"></div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        let selectedPlatform = 'twitter';
+        
+        let posts = JSON.parse(localStorage.getItem('scheduledPosts')) || [
+            { id: 1, platform: 'twitter', content: 'Excited to share our new project! 🚀', date: '2026-02-24', time: '09:00', status: 'scheduled' },
+            { id: 2, platform: 'linkedin', content: 'New blog post: Building AI Products in 2026', date: '2026-02-25', time: '14:00', status: 'scheduled' },
+            { id: 3, platform: 'twitter', content: 'Thread: 10 tools every developer needs 🧵', date: '2026-02-26', time: '10:00', status: 'scheduled' }
+        ];
+        
+        function selectPlatform(platform) {
+            selectedPlatform = platform;
+            document.querySelectorAll('.platform').forEach(p => {
+                p.classList.toggle('active', p.dataset.platform === platform);
+            });
+        }
+        
+        function showTab(tab) {
+            document.getElementById('schedule').classList.add('hidden');
+            document.getElementById('queue').classList.add('hidden');
+            document.getElementById('calendar').classList.add('hidden');
+            document.getElementById(tab).classList.remove('hidden');
+            
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            if (tab === 'schedule') renderUpcoming();
+            if (tab === 'queue') renderQueue();
+            if (tab === 'calendar') renderCalendar();
+        }
+        
+        function schedulePost() {
+            const content = document.getElementById('postContent').value;
+            const date = document.getElementById('postDate').value;
+            const time = document.getElementById('postTime').value;
+            
+            if (!content || !date || !time) return alert('Please fill all fields');
+            
+            posts.push({
+                id: Date.now(),
+                platform: selectedPlatform,
+                content,
+                date,
+                time,
+                status: 'scheduled'
+            });
+            
+            localStorage.setItem('scheduledPosts', JSON.stringify(posts));
+            
+            document.getElementById('postContent').value = '';
+            renderUpcoming();
+            updateStats();
+            alert('Post scheduled!');
+        }
+        
+        function renderUpcoming() {
+            const list = document.getElementById('upcomingList');
+            const upcoming = posts.filter(p => p.status === 'scheduled').sort((a,b) => new Date(a.date + ' ' + a.time) - new Date(b.date + ' ' + b.time));
+            
+            list.innerHTML = upcoming.map(post => `
+                <div class="schedule-item">
+                    <div class="schedule-header">
+                        <span class="schedule-platform">${post.platform === 'twitter' ? '𝕏' : '💼'} ${post.platform}</span>
+                        <span class="schedule-time">${post.date} ${post.time}</span>
+                    </div>
+                    <div class="schedule-content">${post.content}</div>
+                </div>
+            `).join('');
+        }
+        
+        function renderQueue() {
+            const list = document.getElementById('queueList');
+            const queued = posts.filter(p => p.status === 'queued');
+            
+            list.innerHTML = queued.map(post => `
+                <div class="schedule-item">
+                    <div class="schedule-header">
+                        <span class="schedule-platform">${post.platform}</span>
+                        <span class="schedule-time">${post.date}</span>
+                    </div>
+                    <div class="schedule-content">${post.content}</div>
+                </div>
+            `).join('') || '<p style="color: #606070;">No posts in queue</p>';
+        }
+        
+        function renderCalendar() {
+            const grid = document.getElementById('calendarGrid');
+            const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+            
+            let html = days.map(d => `<div class="cal-day-header">${d}</div>`).join('');
+            
+            // Add empty cells for Feb 2026
+            for (let i = 0; i < 6; i++) {
+                html += '<div class="cal-day"></div>';
+            }
+            
+            // Add days
+            for (let d = 1; d <= 28; d++) {
+                const dayPosts = posts.filter(p => p.date === `2026-02-${d.toString().padStart(2,'0')}`);
+                const dots = dayPosts.map(() => '<div class="cal-dot"></div>').join('');
+                html += `
+                    <div class="cal-day">
+                        <div class="cal-day-header">${d}</div>
+                        ${dots}
+                    </div>
+                `;
+            }
+            
+            grid.innerHTML = html;
+        }
+        
+        function updateStats() {
+            document.getElementById('scheduledCount').textContent = posts.filter(p => p.status === 'scheduled').length;
+            document.getElementById('sentCount').textContent = posts.filter(p => p.status === 'sent').length;
+            document.getElementById('draftCount').textContent = posts.filter(p => p.status === 'draft').length;
+        }
+        
+        renderUpcoming();
+        updateStats();
+    </script>
+</body>
+</html>
