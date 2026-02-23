@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crypto Vault - Secure Storage Manager</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: linear-gradient(135deg, #1a1a2e 0%, #0f0f23 100%); min-height: 100vh; padding: 20px; color: #fff; }
+        .container { max-width: 900px; margin: 0 auto; }
+        
+        h1 { text-align: center; margin-bottom: 30px; background: linear-gradient(90deg, #00ff88, #00d4ff); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        
+        .card { background: rgba(255,255,255,0.05); border-radius: 16px; padding: 24px; margin-bottom: 20px; border: 1px solid rgba(255,255,255,0.1); }
+        
+        .wallet-section { margin-bottom: 30px; }
+        .wallet-section h2 { color: #00ff88; margin-bottom: 15px; font-size: 1.2rem; }
+        
+        .wallet-row { display: flex; align-items: center; gap: 15px; padding: 15px; background: rgba(255,255,255,0.03); border-radius: 12px; margin-bottom: 10px; }
+        .wallet-icon { font-size: 2rem; }
+        .wallet-info { flex: 1; }
+        .wallet-name { font-weight: 600; }
+        .wallet-type { font-size: 12px; color: #a0a0b0; }
+        .wallet-address { font-family: monospace; font-size: 11px; color: #606070; overflow: hidden; text-overflow: ellipsis; max-width: 200px; }
+        .wallet-balance { text-align: right; }
+        .balance-amount { font-size: 1.2rem; font-weight: 600; color: #00ff88; }
+        .balance-usd { font-size: 12px; color: #a0a0b0; }
+        
+        .btn { padding: 12px 20px; background: linear-gradient(90deg, #00d4ff, #7c3aed); border: none; border-radius: 8px; color: #fff; font-weight: 600; cursor: pointer; font-size: 14px; }
+        .btn:hover { transform: translateY(-2px); }
+        .btn-small { padding: 8px 12px; font-size: 12px; }
+        .btn-danger { background: linear-gradient(90deg, #ff4444, #cc0000); }
+        
+        .warning { background: rgba(255, 136, 0, 0.1); border: 1px solid rgba(255, 136, 0, 0.3); border-radius: 12px; padding: 16px; margin-bottom: 20px; }
+        .warning-title { color: #ff8800; font-weight: 600; margin-bottom: 8px; }
+        .warning-text { font-size: 14px; color: #ccc; line-height: 1.5; }
+        
+        .security-tip { background: rgba(0, 255, 136, 0.05); border-left: 3px solid #00ff88; padding: 12px 16px; margin: 10px 0; font-size: 13px; color: #a0a0b0; }
+        
+        .tab-buttons { display: flex; gap: 10px; margin-bottom: 20px; }
+        .tab-btn { padding: 10px 20px; background: rgba(255,255,255,0.1); border: none; border-radius: 8px; color: #fff; cursor: pointer; }
+        .tab-btn.active { background: #00d4ff; }
+        
+        input, select { padding: 12px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 8px; color: #fff; width: 100%; margin-bottom: 12px; }
+        
+        .hidden { display: none; }
+        
+        .checklist-item { display: flex; align-items: center; gap: 10px; padding: 12px; border-bottom: 1px solid rgba(255,255,255,0.1); }
+        .checklist-item:last-child { border-bottom: none; }
+        .check-box { width: 20px; height: 20px; border-radius: 4px; border: 2px solid #00d4ff; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+        .check-box.checked { background: #00d4ff; }
+        
+        .distribution-bar { height: 30px; background: rgba(255,255,255,0.1); border-radius: 15px; overflow: hidden; display: flex; }
+        .dist-cold { background: linear-gradient(90deg, #00ff88, #00cc66); }
+        .dist-hot { background: linear-gradient(90deg, #ffaa00, #ff8800); }
+        .dist-new { background: linear-gradient(90deg, #ff4444, #cc0000); }
+        
+        .dist-label { display: flex; justify-content: space-between; margin-top: 8px; font-size: 12px; color: #a0a0b0; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔐 Crypto Vault</h1>
+        
+        <div class="warning">
+            <div class="warning-title">⚠️ Security Notice</div>
+            <div class="warning-text">This is a tracking tool only. Never store sensitive data (seed phrases, private keys) digitally. Use hardware wallets for large amounts.</div>
+        </div>
+        
+        <div class="tab-buttons">
+            <button class="tab-btn active" onclick="showTab('wallets')">My Wallets</button>
+            <button class="tab-btn" onclick="showTab('add')">Add Wallet</button>
+            <button class="tab-btn" onclick="showTab('security')">Security Checklist</button>
+        </div>
+        
+        <!-- WALLETS TAB -->
+        <div id="wallets">
+            <div class="card">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                    <h3>Portfolio Distribution</h3>
+                </div>
+                
+                <div class="distribution-bar">
+                    <div class="dist-cold" style="width: 60%"></div>
+                    <div class="dist-hot" style="width: 30%"></div>
+                    <div class="dist-new" style="width: 10%"></div>
+                </div>
+                <div class="dist-label">
+                    <span>🔒 Cold: 60%</span>
+                    <span>🔥 Hot: 30%</span>
+                    <span>🆕 New: 10%</span>
+                </div>
+            </div>
+            
+            <div class="wallet-section">
+                <h2>🔒 Cold Storage (Hardware Wallets)</h2>
+                <div id="coldWallets"></div>
+            </div>
+            
+            <div class="wallet-section">
+                <h2>🔥 Hot Wallets (Trading)</h2>
+                <div id="hotWallets"></div>
+            </div>
+            
+            <div class="wallet-section">
+                <h2>🆕 New Coin Wallets (Isolated)</h2>
+                <div id="newCoinWallets"></div>
+            </div>
+        </div>
+        
+        <!-- ADD WALLET TAB -->
+        <div id="add" class="hidden">
+            <div class="card">
+                <h3 style="margin-bottom: 20px;">Add New Wallet</h3>
+                
+                <label>Wallet Name</label>
+                <input type="text" id="walletName" placeholder="e.g., Ledger Main">
+                
+                <label>Type</label>
+                <select id="walletType">
+                    <option value="cold">Cold - Hardware Wallet</option>
+                    <option value="hot">Hot - Trading Wallet</option>
+                    <option value="newcoin">New Coin - Isolated</option>
+                </select>
+                
+                <label>Blockchain</label>
+                <select id="walletChain">
+                    <option value="ethereum">Ethereum</option>
+                    <option value="solana">Solana</option>
+                    <option value="base">Base</option>
+                    <option value="bitcoin">Bitcoin</option>
+                    <option value="polygon">Polygon</option>
+                </select>
+                
+                <label>Address (public only - never private keys!)</label>
+                <input type="text" id="walletAddress" placeholder="0x...">
+                
+                <label>Current Balance (optional)</label>
+                <input type="number" id="walletBalance" placeholder="0.00">
+                
+                <button class="btn" onclick="addWallet()">Add Wallet</button>
+            </div>
+        </div>
+        
+        <!-- SECURITY TAB -->
+        <div id="security" class="hidden">
+            <div class="card">
+                <h3 style="margin-bottom: 20px;">🔒 Security Checklist</h3>
+                
+                <div class="checklist-item">
+                    <div class="check-box" onclick="toggleCheck(this)"></div>
+                    <span>Seed phrase written on paper (not metal or digital)</span>
+                </div>
+                <div class="checklist-item">
+                    <div class="check-box" onclick="toggleCheck(this)"></div>
+                    <span>Seed phrase stored in multiple locations</span>
+                </div>
+                <div class="checklist-item">
+                    <div class="check-box" onclick="toggleCheck(this)"></div>
+                    <span>Hardware wallet purchased directly from manufacturer</span>
+                </div>
+                <div class="checklist-item">
+                    <div class="check-box" onclick="toggleCheck(this)"></div>
+                    <span>2FA enabled on all exchange accounts</span>
+                </div>
+                <div class="checklist-item">
+                    <div class="check-box" onclick="toggleCheck(this)"></div>
+                    <span>Recovery phrase tested with small transaction first</span>
+                </div>
+                <div class="checklist-item">
+                    <div class="check-box" onclick="toggleCheck(this)"></div>
+                    <span>No more than 10% of portfolio in hot wallets</span>
+                </div>
+                <div class="checklist-item">
+                    <div class="check-box" onclick="toggleCheck(this)"></div>
+                    <span>Trusted contact knows how to access (optional)</span>
+                </div>
+            </div>
+            
+            <div class="card">
+                <h3 style="margin-bottom: 15px;">⚡ Quick Tips</h3>
+                <div class="security-tip">Never share your seed phrase with anyone, including us</div>
+                <div class="security-tip">Hardware wallets are essential for >$1,000 worth of crypto</div>
+                <div class="security-tip">Use separate wallets for new/meme coins to isolate risk</div>
+                <div class="security-tip">Test transactions with small amounts before moving larger sums</div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        let wallets = JSON.parse(localStorage.getItem('cryptoVaultWallets')) || [
+            { id: 1, name: 'Ledger Main', type: 'cold', chain: 'ethereum', address: '0x742d35Cc6634C0532925a3b844Bc9e7595f...', balance: 0 },
+            { id: 2, name: 'MetaMask Trading', type: 'hot', chain: 'ethereum', address: '0x8f3Cf7ad23Cd3CaDbD9735AFf958023239c6A...', balance: 500 },
+            { id: 3, name: 'Phantom Solana', type: 'hot', chain: 'solana', address: '7xKXtg2CW87d97TXJSDpbD...', balance: 200 }
+        ];
+        
+        function showTab(tab) {
+            document.getElementById('wallets').classList.add('hidden');
+            document.getElementById('add').classList.add('hidden');
+            document.getElementById('security').classList.add('hidden');
+            document.getElementById(tab).classList.remove('hidden');
+            
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+        }
+        
+        function renderWallets() {
+            const coldDiv = document.getElementById('coldWallets');
+            const hotDiv = document.getElementById('hotWallets');
+            const newDiv = document.getElementById('newCoinWallets');
+            
+            coldDiv.innerHTML = '';
+            hotDiv.innerHTML = '';
+            newDiv.innerHTML = '';
+            
+            const icons = {
+                ethereum: 'Ξ',
+                solana: '◎',
+                base: '🔵',
+                bitcoin: '₿',
+                polygon: '⬡'
+            };
+            
+            const typeLabels = {
+                cold: 'Hardware',
+                hot: 'Hot',
+                newcoin: 'New'
+            };
+            
+            wallets.forEach(wallet => {
+                const html = `
+                    <div class="wallet-row">
+                        <div class="wallet-icon">${icons[wallet.chain] || '💰'}</div>
+                        <div class="wallet-info">
+                            <div class="wallet-name">${wallet.name}</div>
+                            <div class="wallet-type">${typeLabels[wallet.type]} • ${wallet.chain}</div>
+                            <div class="wallet-address">${wallet.address || 'No address'}</div>
+                        </div>
+                        <div class="wallet-balance">
+                            <div class="balance-amount">$${wallet.balance || 0}</div>
+                            <button class="btn btn-small" onclick="removeWallet(${wallet.id})">Remove</button>
+                        </div>
+                    </div>
+                `;
+                
+                if (wallet.type === 'cold') coldDiv.innerHTML += html;
+                else if (wallet.type === 'hot') hotDiv.innerHTML += html;
+                else newDiv.innerHTML += html;
+            });
+            
+            if (!coldDiv.innerHTML) coldDiv.innerHTML = '<p style="color: #606070;">No cold wallets added</p>';
+            if (!hotDiv.innerHTML) hotDiv.innerHTML = '<p style="color: #606070;">No hot wallets added</p>';
+            if (!newDiv.innerHTML) newDiv.innerHTML = '<p style="color: #606070;">No new coin wallets added</p>';
+        }
+        
+        function addWallet() {
+            const name = document.getElementById('walletName').value;
+            const type = document.getElementById('walletType').value;
+            const chain = document.getElementById('walletChain').value;
+            const address = document.getElementById('walletAddress').value;
+            const balance = parseFloat(document.getElementById('walletBalance').value) || 0;
+            
+            if (!name) return alert('Please enter a wallet name');
+            
+            wallets.push({ id: Date.now(), name, type, chain, address, balance });
+            localStorage.setItem('cryptoVaultWallets', JSON.stringify(wallets));
+            
+            document.getElementById('walletName').value = '';
+            document.getElementById('walletAddress').value = '';
+            document.getElementById('walletBalance').value = '';
+            
+            renderWallets();
+            showTab('wallets');
+            alert('Wallet added!');
+        }
+        
+        function removeWallet(id) {
+            if (confirm('Remove this wallet?')) {
+                wallets = wallets.filter(w => w.id !== id);
+                localStorage.setItem('cryptoVaultWallets', JSON.stringify(wallets));
+                renderWallets();
+            }
+        }
+        
+        function toggleCheck(el) {
+            el.classList.toggle('checked');
+            if (el.classList.contains('checked')) {
+                el.innerHTML = '✓';
+            } else {
+                el.innerHTML = '';
+            }
+        }
+        
+        renderWallets();
+    </script>
+</body>
+</html>

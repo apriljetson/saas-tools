@@ -1,45 +1,54 @@
-# Crypto Portfolio Tracker
-## Track your holdings across wallets and exchanges
+# Crypto Storage Structure
 
----
+## Secure Wallet Management
 
-## Features
+This directory contains tools for secure cryptocurrency storage management.
 
-- **Multi-wallet tracking** - Add wallet addresses
-- **Price alerts** - Get notified on price moves
-- **P&L calculations** - Profit/loss tracking
-- **Historical charts** - Visualize portfolio over time
-- **DeFi integration** - Track staking, lending positions
+## Files
 
----
+| File | Purpose |
+|------|---------|
+| `index.html` | Portfolio tracker |
+| `vault.html` | Secure wallet vault manager |
+| `wallet-manager.js` | CLI wallet management |
+| `docs/crypto-storage-best-practices.md` | Security guide |
 
-## Supported Chains
+## Quick Start
 
-| Chain | Status |
-|-------|--------|
-| Ethereum | ✅ |
-| Solana | ✅ |
-| Base | ✅ |
-| Polygon | ✅ |
-| Arbitrum | ✅ |
-| Avalanche | ✅ |
-| BSC | ✅ |
+### Web Interface
+Open `vault.html` in a browser to:
+- Track multiple wallets
+- Monitor portfolio distribution
+- Security checklist
 
----
+### CLI
+```bash
+# List wallets
+node wallet-manager.js list
 
-## API Endpoints
+# Add wallet
+node wallet-manager.js add
 
+# Show cold wallets
+node wallet-manager.js cold
+
+# Export (addresses only)
+node wallet-manager.js export
 ```
-GET /api/portfolio/:address
-GET /api/prices?coins=btc,eth,sol
-POST /api/alerts
-  { coin, condition, price, notification }
-```
+
+## Security Principles
+
+1. **Never store private keys digitally**
+2. **Use hardware wallets for >$1K**
+3. **Separate wallets for trading vs long-term**
+4. **Isolate new coin experiments**
+
+## Wallet Types
+
+- **Cold** - Hardware wallet (Ledger/Trezor)
+- **Hot** - Trading wallet (MetaMask)
+- **New Coin** - Isolated experiments
 
 ---
 
-## Data Sources
-
-- **Prices:** CoinGecko API (free tier)
-- **Balances:** RPC nodes /wallet APIs
-- **Historical:** CoinGecko historical data
+*Remember: Not your keys, not your crypto!*
